@@ -200,7 +200,7 @@ export default function ChatWindow({ sessionId, token, onClose }: Props) {
                 whiteSpace: "pre-wrap",
               }}
             >
-              {item.content || (item.id === streamingMessageId ? "در حال نوشتن..." : "")}
+              {item.content || (item.id === streamingMessageId ? <TypingIndicator /> : "")}
               {item.citations?.length ? <CitationList citations={item.citations} /> : null}
             </div>
           </div>
@@ -250,7 +250,59 @@ export default function ChatWindow({ sessionId, token, onClose }: Props) {
   )
 }
 
+function TypingIndicator() {
+  return (
+    <div
+      aria-label="در حال نوشتن"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "5px",
+        minWidth: "44px",
+        padding: "4px 2px",
+      }}
+    >
+      {[0, 1, 2].map((index) => (
+        <span
+          key={index}
+          style={{
+            width: "7px",
+            height: "7px",
+            borderRadius: "999px",
+            background: "#2563eb",
+            opacity: 0.35 + index * 0.2,
+            animation: "chat-widget-typing 1s ease-in-out infinite",
+            animationDelay: `${index * 0.16}s`,
+          }}
+        />
+      ))}
+      <style>
+        {`
+          @keyframes chat-widget-typing {
+            0%, 80%, 100% {
+              transform: translateY(0);
+              opacity: 0.35;
+            }
+            40% {
+              transform: translateY(-4px);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
+    </div>
+  )
+}
+
 function CitationList({ citations }: { citations: ChatCitation[] }) {
+  const handleCitationClick = (citation: ChatCitation) => {
+    window.dispatchEvent(
+      new CustomEvent("chat-widget:citation-click", {
+        detail: citation,
+      }),
+    )
+  }
+
   return (
     <div
       style={{
@@ -270,15 +322,26 @@ function CitationList({ citations }: { citations: ChatCitation[] }) {
         منابع
       </div>
       {citations.map((citation) => (
-        <div
+        <button
           key={`${citation.file_id}-${citation.index}-${citation.chunk_index}`}
+          type="button"
+          onClick={() => handleCitationClick(citation)}
+          title={citation.file_id}
           style={{
+            width: "100%",
+            border: "1px solid #dbeafe",
+            borderRadius: "8px",
+            background: "#f8fbff",
+            padding: "7px",
             display: "flex",
             gap: "6px",
             alignItems: "flex-start",
+            textAlign: "right",
             color: "#334155",
             fontSize: "12px",
             marginTop: "5px",
+            cursor: "pointer",
+            fontFamily: "inherit",
           }}
         >
           <span
@@ -298,12 +361,30 @@ function CitationList({ citations }: { citations: ChatCitation[] }) {
             {citation.index}
           </span>
           <span>
-            {citation.file_name}
-            {citation.page_number ? `، صفحه ${citation.page_number}` : ""}
-            {citation.slide_number ? `، اسلاید ${citation.slide_number}` : ""}
-            {citation.sheet ? `، شیت ${citation.sheet}` : ""}
+            <span
+              style={{
+                display: "block",
+                color: "#0f172a",
+                fontWeight: 700,
+                overflowWrap: "anywhere",
+              }}
+            >
+              {citation.file_name}
+            </span>
+            <span
+              style={{
+                color: "#64748b",
+                display: "block",
+                marginTop: "2px",
+              }}
+            >
+              {citation.page_number ? `صفحه ${citation.page_number}` : ""}
+              {citation.slide_number ? `اسلاید ${citation.slide_number}` : ""}
+              {citation.sheet ? `شیت ${citation.sheet}` : ""}
+              {citation.row ? `، ردیف ${citation.row}` : ""}
+            </span>
           </span>
-        </div>
+        </button>
       ))}
     </div>
   )
