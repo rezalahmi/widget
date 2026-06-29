@@ -8,6 +8,7 @@ declare global {
     }
     __CHAT_WIDGET__?: {
       initialized?: boolean
+      chatSessionId?: string
     }
   }
 }

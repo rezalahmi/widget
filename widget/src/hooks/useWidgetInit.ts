@@ -15,16 +15,12 @@ function resolveWidgetToken() {
 }
 
 export function useWidgetInit() {
-  const initialToken = resolveWidgetToken()
+  const token = resolveWidgetToken()
   const [data, setData] = useState<WidgetInitResponse | null>(null)
-  const [loading, setLoading] = useState(Boolean(initialToken))
-  const [error, setError] = useState<string | null>(
-    initialToken ? null : "Widget token is missing.",
-  )
+  const [loading, setLoading] = useState(Boolean(token))
+  const [error, setError] = useState<string | null>(token ? null : "Widget token is missing.")
 
   useEffect(() => {
-    const token = resolveWidgetToken()
-
     if (!token) {
       console.warn("No widget token found. Init aborted.")
       return
@@ -71,7 +67,7 @@ export function useWidgetInit() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [token])
 
-  return { data, loading, error }
+  return { data, loading, error, token }
 }
