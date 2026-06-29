@@ -2,17 +2,42 @@ import { useState } from "react"
 import FloatingButton from "./components/FloatingButton"
 import ChatWindow from "./components/ChatWindow"
 import { useWidgetInit } from "./hooks/useWidgetInit"
+import { openWidgetChat } from "./sdk/widgetClient"
 
 export default function WidgetApp() {
   const [open, setOpen] = useState(false)
-  const { data, loading } = useWidgetInit()
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null)
+  const { data, loading, token } = useWidgetInit()
 
-  console.log("WidgetApp", { loading, data })
+  console.log("WidgetApp", { loading, data, chatSessionId })
+
+  const handleToggle = () => {
+    setOpen((current) => !current)
+
+    if (open) return
+
+    const visitorKey = data?.visitor.visitor_key
+    if (!visitorKey) {
+      console.warn("Chat open skipped because visitor is not initialized yet.")
+      return
+    }
+
+    openWidgetChat(token, {
+      visitor_key: visitorKey,
+      url: window.location.href,
+    })
+      .then((res) => {
+        setChatSessionId(res.session_id)
+      })
+      .catch((err) => {
+        console.error("Chat open failed:", err)
+      })
+  }
 
   return (
     <>
       {open && <ChatWindow onClose={() => setOpen(false)} />}
-      <FloatingButton onClick={() => setOpen(!open)} />
+      <FloatingButton disabled={loading || !data} onClick={handleToggle} />
     </>
   )
 }

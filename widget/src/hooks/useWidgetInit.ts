@@ -2,51 +2,45 @@ import { useEffect, useState } from "react"
 import { initWidget } from "../sdk/widgetClient"
 import type { WidgetInitResponse } from "../sdk/widgetClient"
 
+let widgetInitPromise: Promise<WidgetInitResponse> | null = null
+
+function resolveWidgetToken() {
+  return window.__CHAT_WIDGET_CONFIG__?.token || import.meta.env.VITE_WIDGET_TOKEN || "test-token-123"
+}
+
 export function useWidgetInit() {
   const [data, setData] = useState<WidgetInitResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const token = resolveWidgetToken()
 
   useEffect(() => {
-    console.log("🔍 useWidgetInit: Effect Started")
+    let cancelled = false
 
-    // 1. تلاش برای خواندن از window (حالت embed)
-    const config = (window as any).__CHAT_WIDGET_CONFIG__
-    
-    // 2. تلاش برای خواندن از env یا fallback (حالت dev)
-    const token =
-      config?.token ||
-      import.meta.env.VITE_WIDGET_TOKEN || 
-      "test-token-123"
-
-    console.log("🔑 Resolved Token:", token)
-
-    if (!token) {
-      console.warn("⚠️ No token found. Init aborted.")
-      setLoading(false)
-      return
+    window.__CHAT_WIDGET__ = window.__CHAT_WIDGET__ || {}
+    if (!widgetInitPromise) {
+      window.__CHAT_WIDGET__.initialized = true
+      widgetInitPromise = initWidget(token)
     }
 
-    // ---------------------------
-    // Prevent double init (React StrictMode + multi mounts)
-    // ---------------------------
-    window.__CHAT_WIDGET__ = window.__CHAT_WIDGET__ || {}
-    if (window.__CHAT_WIDGET__.initialized) return
-    window.__CHAT_WIDGET__.initialized = true
-
-    console.log("🚀 Calling initWidget API...");
-    
-    initWidget(token)
+    widgetInitPromise
       .then((res) => {
-        console.log("✅ Init Success:", res)
-        setData(res)
+        if (!cancelled) {
+          setData(res)
+        }
       })
       .catch((err) => {
-        console.error("❌ Init Failed:", err)
+        console.error("Widget init failed:", err)
       })
       .finally(() => {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       })
-  }, [])
 
-  return { data, loading }
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  return { data, loading, token }
 }

@@ -1,10 +1,12 @@
 type Props = {
   onClick: () => void
+  disabled?: boolean
 }
 
-export default function FloatingButton({ onClick }: Props) {
+export default function FloatingButton({ onClick, disabled = false }: Props) {
   return (
     <button
+      disabled={disabled}
       onClick={onClick}
       style={{
         position: "fixed",
@@ -17,7 +19,8 @@ export default function FloatingButton({ onClick }: Props) {
         background: "#2563eb",
         color: "white",
         fontSize: "24px",
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.7 : 1,
         boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
         zIndex: 9999
       }}
