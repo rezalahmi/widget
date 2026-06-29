@@ -1,4 +1,4 @@
-import { type FormEvent, useRef, useState } from "react"
+import { type FormEvent, useEffect, useRef, useState } from "react"
 import { trackWidgetEvent, VisitorEventType } from "../sdk/eventTracker"
 import { type ChatCitation, sendWidgetChatMessage } from "../sdk/chatStream"
 
@@ -17,6 +17,7 @@ type Props = {
 
 export default function ChatWindow({ sessionId, token, onClose }: Props) {
   const [message, setMessage] = useState("")
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -27,6 +28,18 @@ export default function ChatWindow({ sessionId, token, onClose }: Props) {
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
   const [waitingForFirstChunk, setWaitingForFirstChunk] = useState(false)
   const firstChunkReceived = useRef(false)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1024px)")
+    const updateViewportMode = () => setIsMobileOrTablet(mediaQuery.matches)
+
+    updateViewportMode()
+    mediaQuery.addEventListener("change", updateViewportMode)
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateViewportMode)
+    }
+  }, [])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -114,12 +127,16 @@ export default function ChatWindow({ sessionId, token, onClose }: Props) {
     <div
       style={{
         position: "fixed",
-        bottom: "90px",
-        right: "20px",
-        width: "340px",
-        height: "460px",
+        bottom: isMobileOrTablet ? 0 : "90px",
+        right: isMobileOrTablet ? 0 : "20px",
+        left: isMobileOrTablet ? 0 : "auto",
+        top: isMobileOrTablet ? 0 : "auto",
+        width: isMobileOrTablet ? "100vw" : "340px",
+        height: isMobileOrTablet ? "100dvh" : "460px",
+        maxWidth: isMobileOrTablet ? "100vw" : "calc(100vw - 40px)",
+        maxHeight: isMobileOrTablet ? "100dvh" : "calc(100vh - 120px)",
         background: "white",
-        borderRadius: "12px",
+        borderRadius: isMobileOrTablet ? 0 : "12px",
         boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
         display: "flex",
         flexDirection: "column",
