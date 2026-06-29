@@ -2,11 +2,20 @@
 //این فایل یک شناسه (ID) از حافظه مرورگر می‌گیره (یا می‌سازه)، بعد اطلاعاتی مثل آدرس سایت،
 //  زبان مرورگر، اندازه صفحه و... رو جمع می‌کنه و با یک درخواست POST به سرور شما می‌فرسته تا کاربر رو بشناسونه.
 export type WidgetInitResponse = {
-  visitor_key: string
+  visitor: {
+    id: string
+    visitor_key: string
+    session_count: number
+    first_seen_at: string
+    last_seen_at: string
+  }
   widget: {
-    name: string
-    primary_color: string
-    position: "left" | "right"
+    enabled: boolean
+    auto_open: boolean
+    theme: {
+      primary_color: string
+      position: string
+    }
   }
 }
 
