@@ -1,3 +1,5 @@
+//widget\src\components\ChatWindow.tsx
+//همون باکس چت هست. الان یک پیام ثابت ("سلام! چطور می‌تونم کمکت کنم؟") و یک کادر برای تایپ پیام داره
 type Props = {
   onClose: () => void
 }

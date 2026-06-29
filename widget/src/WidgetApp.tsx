@@ -1,3 +1,5 @@
+//widget\src\WidgetApp.tsx
+//این فایل‌ها به فرانت‌اند می‌گن: "وقتی ویجت لود شد، برو سرور رو چک کن. اگر موفق بود، اون ردیاب مخفی رو روشن کن".
 import { useState } from "react"
 import FloatingButton from "./components/FloatingButton"
 import ChatWindow from "./components/ChatWindow"

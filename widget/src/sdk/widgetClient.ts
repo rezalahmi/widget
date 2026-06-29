@@ -1,3 +1,6 @@
+//widget\src\sdk\widgetClient.ts
+//این فایل یک شناسه (ID) از حافظه مرورگر می‌گیره (یا می‌سازه)، بعد اطلاعاتی مثل آدرس سایت،
+//  زبان مرورگر، اندازه صفحه و... رو جمع می‌کنه و با یک درخواست POST به سرور شما می‌فرسته تا کاربر رو بشناسونه.
 export type WidgetInitResponse = {
   visitor_key: string
   widget: {
@@ -6,6 +9,10 @@ export type WidgetInitResponse = {
     position: "left" | "right"
   }
 }
+
+
+
+
 
 const API_BASE = "http://185.155.9.107:8080/api/v1/widget"
 
