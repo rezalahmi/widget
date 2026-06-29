@@ -26,7 +26,14 @@ export function useWidgetInit() {
       return
     }
 
-    console.log("🚀 Calling initWidget API...")
+    // ---------------------------
+    // Prevent double init (React StrictMode + multi mounts)
+    // ---------------------------
+    window.__CHAT_WIDGET__ = window.__CHAT_WIDGET__ || {}
+    if (window.__CHAT_WIDGET__.initialized) return
+    window.__CHAT_WIDGET__.initialized = true
+
+    console.log("🚀 Calling initWidget API...");
     
     initWidget(token)
       .then((res) => {
