@@ -2,11 +2,11 @@ import { useState } from "react"
 import FloatingButton from "./components/FloatingButton"
 import ChatWindow from "./components/ChatWindow"
 import { useWidgetInit } from "./hooks/useWidgetInit"
-import { openWidgetChat } from "./sdk/widgetClient"
+import { getStoredChatSessionId, openWidgetChat } from "./sdk/widgetClient"
 
 export default function WidgetApp() {
   const [open, setOpen] = useState(false)
-  const [chatSessionId, setChatSessionId] = useState<string | null>(null)
+  const [chatSessionId, setChatSessionId] = useState<string | null>(() => getStoredChatSessionId())
   const { data, loading, token } = useWidgetInit()
 
   console.log("WidgetApp", { loading, data, chatSessionId })
@@ -36,7 +36,13 @@ export default function WidgetApp() {
 
   return (
     <>
-      {open && <ChatWindow onClose={() => setOpen(false)} />}
+      {open && (
+        <ChatWindow
+          sessionId={chatSessionId}
+          token={token}
+          onClose={() => setOpen(false)}
+        />
+      )}
       <FloatingButton disabled={loading || !data} onClick={handleToggle} />
     </>
   )
