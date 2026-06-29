@@ -1,3 +1,5 @@
+//widget\src\components\FloatingButton.tsx
+//همون دکمه گرد پایین سمت راست صفحه است که آیکون 💬 داره.
 type Props = {
   onClick: () => void
 }

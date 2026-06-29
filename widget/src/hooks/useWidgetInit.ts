@@ -1,52 +1,77 @@
 import { useEffect, useState } from "react"
 import { initWidget } from "../sdk/widgetClient"
 import type { WidgetInitResponse } from "../sdk/widgetClient"
+import {
+  configureVisitorTracker,
+  startVisitorTracker,
+  trackWidgetEvent,
+  VisitorEventType,
+} from "../sdk/eventTracker"
+
+let widgetInitPromise: Promise<WidgetInitResponse> | null = null
+
+function resolveWidgetToken() {
+  return window.__CHAT_WIDGET_CONFIG__?.token || import.meta.env.VITE_WIDGET_TOKEN || ""
+}
 
 export function useWidgetInit() {
+  const initialToken = resolveWidgetToken()
   const [data, setData] = useState<WidgetInitResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(initialToken))
+  const [error, setError] = useState<string | null>(
+    initialToken ? null : "Widget token is missing.",
+  )
 
   useEffect(() => {
-    console.log("🔍 useWidgetInit: Effect Started")
-
-    // 1. تلاش برای خواندن از window (حالت embed)
-    const config = (window as any).__CHAT_WIDGET_CONFIG__
-    
-    // 2. تلاش برای خواندن از env یا fallback (حالت dev)
-    const token =
-      config?.token ||
-      import.meta.env.VITE_WIDGET_TOKEN || 
-      "test-token-123"
-
-    console.log("🔑 Resolved Token:", token)
+    const token = resolveWidgetToken()
 
     if (!token) {
-      console.warn("⚠️ No token found. Init aborted.")
-      setLoading(false)
+      console.warn("No widget token found. Init aborted.")
       return
     }
 
-    // ---------------------------
-    // Prevent double init (React StrictMode + multi mounts)
-    // ---------------------------
-    window.__CHAT_WIDGET__ = window.__CHAT_WIDGET__ || {}
-    if (window.__CHAT_WIDGET__.initialized) return
-    window.__CHAT_WIDGET__.initialized = true
+    let cancelled = false
 
-    console.log("🚀 Calling initWidget API...");
-    
-    initWidget(token)
+    if (!widgetInitPromise) {
+      window.__CHAT_WIDGET__ = window.__CHAT_WIDGET__ || {}
+      window.__CHAT_WIDGET__.initialized = true
+
+      widgetInitPromise = initWidget(token).then((res) => {
+        configureVisitorTracker({ token, visitorKey: res.visitor.visitor_key })
+        trackWidgetEvent(VisitorEventType.WIDGET_INIT, "widget_initialized", {
+          enabled: res.widget?.enabled,
+          auto_open: res.widget?.auto_open,
+          primary_color: res.widget?.theme?.primary_color,
+          position: res.widget?.theme?.position,
+        })
+        startVisitorTracker()
+        return res
+      })
+    }
+
+    widgetInitPromise
       .then((res) => {
-        console.log("✅ Init Success:", res)
-        setData(res)
+        if (!cancelled) {
+          setData(res)
+          setError(null)
+        }
       })
       .catch((err) => {
-        console.error("❌ Init Failed:", err)
+        console.error("Widget init failed:", err)
+        if (!cancelled) {
+          setError(err?.message || "Failed to initialize widget")
+        }
       })
       .finally(() => {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  return { data, loading }
+  return { data, loading, error }
 }
